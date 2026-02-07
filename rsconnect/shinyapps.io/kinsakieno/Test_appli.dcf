@@ -1,0 +1,12 @@
+name: Test_appli
+title: Test_appli
+username: kinsakieno
+account: kinsakieno
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 16611651
+bundleId: 11545842
+url: https://kinsakieno.shinyapps.io/Test_appli/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE

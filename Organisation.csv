@@ -1,0 +1,118 @@
+direction;service;bureau
+DG;Secrétariat de direction;Relations publiques
+DG;Secrétariat de direction;Courrier
+DG;Informatique;Maintenance des équipements informatiques
+DG;Informatique;Développement du système informatique et gestion des bases de données
+DG;Communication et documentation;Communication et médias
+DG;Communication et documentation;Documentation et archivage
+DG;Externe;Externe
+DCS;Coordination et harmonisation statistique;Coordination statistique
+DCS;Coordination et harmonisation statistique;Production des annuaires statistique
+DCS;Programmes de développement statistique;Projets et programmes
+DCS;Programmes de développement statistique;Promotion du développement de la statistique
+DCS;Recherche et coopération;Recherche
+DCS;Recherche et coopération;Coopération
+DSDS;Statistiques de l'Etat civil et des migrations;Statistiques de l'Etat-civil
+DSDS;Statistiques de l'Etat civil et des migrations;Statistiques des migrations
+DSDS;Statistiques de l'éducation, de la santé et de la protection sociale;Statistiques de l'éducation
+DSDS;Statistiques de l'éducation, de la santé et de la protection sociale;Statistiques de la santé
+DSDS;Statistiques de l'éducation, de la santé et de la protection sociale;Statistiques de la protection sociale et de la culture
+DSDS;Statistiques du travail et de l'environnement;Statistiques de la main d'œuvre et de l'emploi
+DSDS;Statistiques du travail et de l'environnement;Statistiques des salaires
+DSDS;Perspectives démographiques et conditions de vie des ménages;Perspectives démographiques
+DSDS;Perspectives démographiques et conditions de vie des ménages;Conditions de vie des ménages
+DSDS;Statistiques judiciaires et pénitentiaires;Statistiques en matière pénale
+DSDS;Statistiques judiciaires et pénitentiaires;Statistiques en matière civile
+DER;Méthodologies générales;Méthodologies et plan de sondage
+DER;Méthodologies générales;Conception des documents de collecte
+DER;Méthodes de traitement;Traitement
+DER;Méthodes de traitement;Conception et développement des instruments de collecte
+DER;Cartographie;Traitement et gestion du système d'information géographique
+DER;Cartographie;Gestion et archivage des données cartographiques
+DSAE;Comptabilité nationale;Comptes nationaux annuels
+DSAE;Comptabilité nationale;Méthodes et études économiques
+DSAE;Comptabilité nationale;Comptes nationaux trimestriels
+DSAE;Analyses conjoncturelles;Etudes et méthodes
+DSAE;Analyses conjoncturelles;Analyses et publications
+DSAE;Statistiques du commerce extérieur;Statistiques du commerce extérieur des marchandises
+DSAE;Statistiques du commerce extérieur;Statistiques du commerce extérieur des services
+DSAE;Statistiques du commerce extérieur;Etudes et méthodes
+DSAE;Prévisions et études économiques;Prévisions
+DSAE;Prévisions et études économiques;Etudes économiques
+DSE;Statistiques d'entreprises;Immatriculation des entreprises et des établissements
+DSE;Statistiques d'entreprises;Production des statistiques d'entreprises
+DSE;Statistiques financières et monétaires;Statistiques financières
+DSE;Statistiques financières et monétaires;Statistiques monétaires
+DSE;Prix à la consommation;Collecte et gestion de la base des données des prix
+DSE;Prix à la consommation;Traitement des prix, analyses et inflation
+DSE;Secteurs productifs;Statistiques du secteur primaire
+DSE;Secteurs productifs;Statistiques du secteur secondaire
+DSE;Secteurs productifs;Statistiques du secteur tertiaire
+DAF;Ressources humaines;Gestion des carrières
+DAF;Ressources humaines;Gestion administrative
+DAF;Ressources humaines;Formation
+DAF;Finances et matériel;Recette
+DAF;Finances et matériel;Dépense
+DAF;Finances et matériel;Comptabilité et matériel
+DAF;Juridique;Réglementation
+DAF;Juridique;Contentieux
+DD;Kouilou;Coordination statistique
+DD;Kouilou;Statistiques économiques
+DD;Kouilou;Statistiques démographiques et sociales
+DD;Kouilou;Enquêtes et recensements
+DD;Kouilou;Administratif et financier
+DD;Niari;Coordination statistique
+DD;Niari;Statistiques économiques
+DD;Niari;Statistiques démographiques et sociales
+DD;Niari;Enquêtes et recensements
+DD;Niari;Administratif et financier
+DD;Lékoumou;Coordination statistique
+DD;Lékoumou;Statistiques économiques
+DD;Lékoumou;Statistiques démographiques et sociales
+DD;Lékoumou;Enquêtes et recensements
+DD;Lékoumou;Administratif et financier
+DD;Bouenza;Coordination statistique
+DD;Bouenza;Statistiques économiques
+DD;Bouenza;Statistiques démographiques et sociales
+DD;Bouenza;Enquêtes et recensements
+DD;Bouenza;Administratif et financier
+DD;Pool;Coordination statistique
+DD;Pool;Statistiques économiques
+DD;Pool;Statistiques démographiques et sociales
+DD;Pool;Enquêtes et recensements
+DD;Pool;Administratif et financier
+DD;Plateaux;Coordination statistique
+DD;Plateaux;Statistiques économiques
+DD;Plateaux;Statistiques démographiques et sociales
+DD;Plateaux;Enquêtes et recensements
+DD;Plateaux;Administratif et financier
+DD;Cuvette;Coordination statistique
+DD;Cuvette;Statistiques économiques
+DD;Cuvette;Statistiques démographiques et sociales
+DD;Cuvette;Enquêtes et recensements
+DD;Cuvette;Administratif et financier
+DD;Cuvette-Ouest;Coordination statistique
+DD;Cuvette-Ouest;Statistiques économiques
+DD;Cuvette-Ouest;Statistiques démographiques et sociales
+DD;Cuvette-Ouest;Enquêtes et recensements
+DD;Cuvette-Ouest;Administratif et financier
+DD;Sangha;Coordination statistique
+DD;Sangha;Statistiques économiques
+DD;Sangha;Statistiques démographiques et sociales
+DD;Sangha;Enquêtes et recensements
+DD;Sangha;Administratif et financier
+DD;Likouala;Coordination statistique
+DD;Likouala;Statistiques économiques
+DD;Likouala;Statistiques démographiques et sociales
+DD;Likouala;Enquêtes et recensements
+DD;Likouala;Administratif et financier
+DD;Brazzaville;Coordination statistique
+DD;Brazzaville;Statistiques économiques
+DD;Brazzaville;Statistiques démographiques et sociales
+DD;Brazzaville;Enquêtes et recensements
+DD;Brazzaville;Administratif et financier
+DD;Pointe-Noire;Coordination statistique
+DD;Pointe-Noire;Statistiques économiques
+DD;Pointe-Noire;Statistiques démographiques et sociales
+DD;Pointe-Noire;Enquêtes et recensements
+DD;Pointe-Noire;Administratif et financier
