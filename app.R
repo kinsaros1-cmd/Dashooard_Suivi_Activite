@@ -394,20 +394,20 @@ ui <- dashboardPage(
               column(
                 width = 4,
                 textInput("ref_activite", "Réf. INS :",
-                         value = "0.0.0.00",
+                         #value = "0.0.0.00",
                          placeholder = "Ex: 1.2.2.01"),
                 uiOutput("alert_ref_ins_ui")
               ),
               column(
                 width = 4,
                 textInput("ref_hiswaca", "Réf. HISWACA :",
-                         value = "0.0.0.00",
+                         #value = "0.0.0.00",
                          placeholder = "Ex: 1.3.7.01")
               ),
               column(
                 width = 4,
                 textInput("ref_etat", "Réf. État :",
-                         value = "0.0.0.00",
+                         #value = "0.0.0.00",
                          placeholder = "Ex: 1.1.5.02")
               )
             ),
