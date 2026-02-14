@@ -1,5 +1,6 @@
 # ================================================================================
 # APPLICATION INS - SYSTÈME INTÉGRÉ DE SUIVI DES ACTIVITÉS
+# Version: 2.0 - Professionnelle
 # Organisation: Institut National de la Statistique (INS)
 # ================================================================================
 
@@ -30,33 +31,7 @@ load_users <- function() {
   if(file.exists(nom_fichier_users)) {
     read.csv2(nom_fichier_users, stringsAsFactors = FALSE, encoding = "UTF-8")
   } else {
-    # Créer la base initiale si elle n'existe pas
-    users_db_default <- data.frame(
-      user_name = c("DG", "DER", "DSDS", "DSE", "DSAE", "KINSA", "POATY", "KAYA", "JEAN"),
-      user_pw = c("pw000", "pw001", "pw002", "pw005", "pw006", "1234", "5678", "ki@1", "pw999"),
-      role = c("Directeur général", "Direction_Centrale", "Direction_Centrale", 
-               "Direction_Centrale", "Direction_Centrale", "RESPONSABLE", "RESPONSABLE", 
-               "RESPONSABLE", "RESPONSABLE"),
-      direction = c("Direction Générale", "Direction des Enquêtes et Recensement", 
-                    "Direction des Statistiques Démographiques et Sociales",
-                    "Direction des Statistiques Economiques", 
-                    "Direction des Statistiques et des Analyses Economiques",
-                    "Direction des Enquêtes et Recensement",
-                    "Direction des Statistiques Economiques",
-                    "Direction des Statistiques Démographiques et Sociales",
-                    "Direction des Statistiques et des Analyses Economiques"),
-      service = c("", "Méthodologie générale", "Statistiques de l'Education",
-                  "Secteurs productifs", "Conjoncture",
-                  "Méthodologie générale", "Secteurs productifs", 
-                  "Statistiques de l'Education", "Conjoncture"),
-      bureau = c("", "Elaboration des documents", "Suivi indicateurs",
-                 "Secteur primaire", "Suivi inflation",
-                 "Elaboration des documents", "Secteur primaire",
-                 "Suivi indicateurs", "Suivi inflation"),
-      stringsAsFactors = FALSE
-    )
-    write.csv2(users_db_default, nom_fichier_users, row.names = FALSE)
-    users_db_default
+    stop("Le fichier users_db.csv est manquant. Veuillez le placer dans le répertoire de l'application.")
   }
 }
 
@@ -65,10 +40,10 @@ users_db <- load_users()
 
 # --- CONFIGURATION DES ÉTAPES DU PROCESSUS ---
 etapes_config <- list(
-  list(id = "TDR", label = "Termes de référence global", doc = TRUE, ordre = 1),
-  list(id = "ANO", label = "Demande d'Avis de Non Objection", doc = FALSE, ordre = 2),
-  list(id = "ETP", label = "Mise en place de l'Équipe Technique", doc = TRUE, ordre = 3),
-  list(id = "TP", label = "Travaux préparatoires", doc = TRUE, ordre = 4),
+  list(id = "ETP", label = "Mise en place de l'Équipe Technique", doc = TRUE, ordre = 1),
+  list(id = "TDR", label = "Termes de référence global", doc = TRUE, ordre = 2),
+  list(id = "TP", label = "Travaux préparatoires", doc = TRUE, ordre = 3),
+  list(id = "ANO", label = "Demande d'Avis de Non Objection", doc = FALSE, ordre = 4),
   list(id = "FP", label = "Formation du personnel", doc = TRUE, ordre = 5),
   list(id = "CDT", label = "Collecte de données sur le terrain", doc = TRUE, ordre = 6),
   list(id = "TAD", label = "Traitement / Apurement des données", doc = TRUE, ordre = 7),
@@ -106,34 +81,11 @@ ui <- dashboardPage(
     sidebarMenu(
       id = "sidebar_menu",
       
-      # Menu Connexion
+      # Menu Connexion (toujours visible)
       menuItem("Connexion", tabName = "login", icon = icon("sign-in-alt")),
       
-      # Menu Saisie (visible après connexion)
-      menuItem("Saisie des activités", tabName = "saisie", 
-               icon = icon("edit"), startExpanded = FALSE,
-               menuSubItem("Nouvelle activité", tabName = "nouvelle_activite", icon = icon("plus-circle")),
-               menuSubItem("Mes activités", tabName = "mes_activites", icon = icon("list"))
-      ),
-      
-      # Menu Tableau de bord
-      menuItem("Tableau de bord", tabName = "dashboard", icon = icon("dashboard")),
-      
-      # Menu Analyses
-      menuItem("Analyses", tabName = "analyses", icon = icon("chart-line"),
-               menuSubItem("Vue d'ensemble", tabName = "vue_ensemble", icon = icon("eye")),
-               menuSubItem("Performance", tabName = "performance", icon = icon("trophy")),
-               menuSubItem("Planification", tabName = "planification", icon = icon("calendar"))
-      ),
-      
-      # Menu Documents
-      menuItem("Documents", tabName = "documents", icon = icon("folder-open")),
-      
-      # Menu Rapports
-      menuItem("Rapports", tabName = "rapports", icon = icon("file-alt")),
-      
-      # Menu Administration (visible pour DG et Directions)
-      menuItem("Administration", tabName = "admin", icon = icon("cog"))
+      # Tous les autres menus (visibles UNIQUEMENT après connexion)
+      uiOutput("authenticated_menus_ui")
     ),
     
     hr(),
@@ -375,35 +327,7 @@ ui <- dashboardPage(
             br(),
             uiOutput("login_message"),
             
-            hr(),
-            
-            div(
-              style = "background: #f4f4f4; padding: 15px; border-radius: 6px;",
-              h5(icon("info-circle"), " Comptes de test disponibles :"),
-              tags$table(
-                class = "table table-sm",
-                tags$tr(
-                  tags$th("Rôle"),
-                  tags$th("Utilisateur"),
-                  tags$th("Mot de passe")
-                ),
-                tags$tr(
-                  tags$td(tags$strong("Directeur Général")),
-                  tags$td("DG"),
-                  tags$td("pw000")
-                ),
-                tags$tr(
-                  tags$td(tags$strong("Direction DER")),
-                  tags$td("DER"),
-                  tags$td("pw001")
-                ),
-                tags$tr(
-                  tags$td(tags$strong("Responsable")),
-                  tags$td("KINSA"),
-                  tags$td("1234")
-                )
-              )
-            )
+            hr()
           )
         )
       ),
@@ -459,30 +383,70 @@ ui <- dashboardPage(
             solidHeader = TRUE,
             width = 12,
             
+            # ============================================================
+            # BLOC 1 : RÉFÉRENCES
+            # ============================================================
+            tags$h4(icon("bookmark"), " Références", style = "color: #3c8dbc; margin-top: 0;"),
+            tags$p(class = "text-muted", style = "font-size: 12px;",
+                  "Format : X.X.X.XX (Ex: 1.2.1.03). Pour les activités non budgétisées, utiliser : 0.0.0.00"),
+            
             fluidRow(
               column(
-                width = 3,
-                textInput("ref_activite", "Référence :",
-                         placeholder = "Ex: 1.2.2.01")
+                width = 4,
+                textInput("ref_activite", "Réf. INS :",
+                         value = "0.0.0.00",
+                         placeholder = "Ex: 1.2.2.01"),
+                uiOutput("alert_ref_ins_ui")
               ),
               column(
-                width = 3,
+                width = 4,
+                textInput("ref_hiswaca", "Réf. HISWACA :",
+                         value = "0.0.0.00",
+                         placeholder = "Ex: 1.3.7.01")
+              ),
+              column(
+                width = 4,
+                textInput("ref_etat", "Réf. État :",
+                         value = "0.0.0.00",
+                         placeholder = "Ex: 1.1.5.02")
+              )
+            ),
+            
+            hr(),
+            
+            # ============================================================
+            # BLOC 2 : IDENTIFICATION DE L'ACTIVITÉ
+            # ============================================================
+            tags$h4(icon("tag"), " Identification de l'activité", style = "color: #3c8dbc;"),
+            
+            fluidRow(
+              column(
+                width = 4,
                 pickerInput("type_activite", "Type d'activité :",
                            choices = types_activites,
                            selected = "Sélectionnez le type")
               ),
               column(
-                width = 6,
+                width = 8,
                 textInput("nom_activite", "Nom de l'activité (Unique) :",
                          placeholder = "Ex: Enquête harmonisée sur les conditions de vie")
               )
             ),
+            
+            hr(),
+            
+            # ============================================================
+            # BLOC 3 : PLANIFICATION
+            # ============================================================
+            tags$h4(icon("calendar-alt"), " Planification", style = "color: #3c8dbc;"),
             
             fluidRow(
               column(
                 width = 4,
                 dateInput("date_debut", "Date de début :",
                          value = Sys.Date(),
+                         min = "2026-01-01",
+                         max = "2026-12-31",
                          format = "dd/mm/yyyy",
                          language = "fr")
               ),
@@ -490,6 +454,8 @@ ui <- dashboardPage(
                 width = 4,
                 dateInput("date_fin", "Date de fin prévue :",
                          value = Sys.Date() + 180,
+                         min = "2026-01-01",
+                         max = "2026-12-31",
                          format = "dd/mm/yyyy",
                          language = "fr")
               ),
@@ -499,10 +465,68 @@ ui <- dashboardPage(
               )
             ),
             
+            hr(),
+            
+            # ============================================================
+            # BLOC 4 : FINANCEMENT
+            # ============================================================
+            tags$h4(icon("dollar-sign"), " Financement", style = "color: #3c8dbc;"),
+            
             fluidRow(
               column(
                 width = 12,
-                textAreaInput("observation_activite", "Observations :",
+                tags$label("Source de financement :"),
+                checkboxGroupInput("source_financement", 
+                                  label = NULL,
+                                  choices = c("État" = "Etat",
+                                            "HISWACA" = "HISWACA",
+                                            "BAD" = "BAD",
+                                            "Autre" = "Autre"),
+                                  inline = TRUE)
+              )
+            ),
+            
+            # Champ conditionnel pour préciser "Autre"
+            fluidRow(
+              column(
+                width = 12,
+                uiOutput("autre_financement_ui")
+              )
+            ),
+            
+            # Coûts et Gap
+            fluidRow(
+              column(
+                width = 4,
+                numericInput("cout_initial", "Coût total initial (FCFA) :",
+                            value = 0,
+                            min = 0,
+                            step = 1000)
+              ),
+              column(
+                width = 4,
+                numericInput("cout_consomme", "Coût consommé (FCFA) :",
+                            value = 0,
+                            min = 0,
+                            step = 1000)
+              ),
+              column(
+                width = 4,
+                uiOutput("gap_cout_ui")
+              )
+            ),
+            
+            hr(),
+            
+            # ============================================================
+            # BLOC 5 : OBSERVATIONS
+            # ============================================================
+            tags$h4(icon("comment"), " Observations", style = "color: #3c8dbc;"),
+            
+            fluidRow(
+              column(
+                width = 12,
+                textAreaInput("observation_activite", label = NULL,
                              rows = 3,
                              placeholder = "Remarques, commentaires, précisions...")
               )
@@ -521,7 +545,18 @@ ui <- dashboardPage(
             p(class = "text-muted", 
               icon("info-circle"), 
               " Cochez les étapes complétées et joignez les documents justificatifs. ",
-              "Les étapes suivent un ordre séquentiel."),
+              "Le statut du document détermine le score : Draft (3/10), En cours (6/10), Finalisé(e) (10/10)."),
+            
+            # En-têtes de colonnes
+            fluidRow(
+              column(3, tags$strong("Étape")),
+              column(1, tags$strong(style = "text-align: center;", "Activé")),
+              column(2, tags$strong("Date début")),
+              column(2, tags$strong("Date fin")),
+              column(2, tags$strong("Document")),
+              column(2, tags$strong("Statut doc."))
+              # Colonne Score masquée
+            ),
             
             hr(),
             
@@ -640,7 +675,7 @@ ui <- dashboardPage(
         fluidRow(
           box(
             title = tagList(icon("trophy"), " Top 10 Activités par Avancement"),
-            status = "success",
+            status = "primary",
             solidHeader = TRUE,
             collapsible = TRUE,
             width = 12,
@@ -651,7 +686,7 @@ ui <- dashboardPage(
         fluidRow(
           box(
             title = tagList(icon("hourglass-half"), " Top 10 Activités embryonnaires par Avancement"),
-            status = "danger",
+            status = "warning",
             solidHeader = TRUE,
             collapsible = TRUE,
             width = 12,
@@ -736,15 +771,15 @@ ui <- dashboardPage(
             title = tagList(icon("building"), " Performance par service"),
             status = "info",
             solidHeader = TRUE,
-            width = 12,
+            width = 6,
             plotlyOutput("performance_service", height = 400)
           ),
           
           box(
             title = tagList(icon("user-tie"), " Performance par responsable"),
-            status = "info",
+            status = "success",
             solidHeader = TRUE,
-            width = 12,
+            width = 6,
             plotlyOutput("performance_responsable", height = 400)
           )
         ),
@@ -752,7 +787,7 @@ ui <- dashboardPage(
         fluidRow(
           box(
             title = tagList(icon("percentage"), " Distribution des avancements"),
-            status = "info",
+            status = "warning",
             solidHeader = TRUE,
             width = 12,
             plotlyOutput("histogram_avancement", height = 350)
@@ -823,6 +858,31 @@ ui <- dashboardPage(
             status = "primary",
             solidHeader = TRUE,
             width = 12,
+            
+            # Filtre de recherche
+            fluidRow(
+              column(
+                width = 6,
+                textInput("search_documents", 
+                         label = NULL,
+                         placeholder = "🔍 Rechercher par référence, activité, ou responsable...")
+              ),
+              column(
+                width = 3,
+                selectInput("filter_doc_direction",
+                           label = NULL,
+                           choices = c("Toutes directions" = ""),
+                           selected = "")
+              ),
+              column(
+                width = 3,
+                actionButton("clear_doc_filters", "Réinitialiser filtres",
+                            icon = icon("redo"),
+                            class = "btn-warning btn-sm")
+              )
+            ),
+            
+            hr(),
             
             uiOutput("documents_list_ui")
           )
@@ -1039,7 +1099,8 @@ server <- function(input, output, session) {
     date_fin = Sys.Date() + 180,
     observation = "",
     docs_existants = list(),
-    editing_activity = NULL
+    editing_activity = NULL,
+    form_refresh_trigger = 0  # Trigger pour forcer le re-render
   )
   
   # Base de données
@@ -1174,16 +1235,83 @@ server <- function(input, output, session) {
     session$reload()
   })
   
-  # Info utilisateur sidebar
-  output$user_info_sidebar <- renderText({
+  # Info utilisateur sidebar - Affichage amélioré
+  output$user_info_sidebar <- renderUI({
     if(!is.null(auth$user_info)) {
+      # Gérer le cas où Service pourrait être NA ou vide
+      service_display <- if(!is.null(auth$user_info$service) && 
+                            !is.na(auth$user_info$service) && 
+                            auth$user_info$service != "" && 
+                            auth$user_info$service != "NA") {
+        auth$user_info$service
+      } else {
+        "-"
+      }
       
-      paste0(tags$span(style = "color: blue; font-weight: bold;",
-                       "Utilisateur : ", auth$user_info$user_name, "\n",
-                       #       "Rôle : ", auth$user_info$role, "\n",
-                       "Direction : ", auth$user_info$direction, "\n",
-                       "Service : ", auth$user_info$service
-      ))
+      div(
+        style = "background: #d4edda; padding: 15px; border-radius: 5px; border-left: 4px solid #28a745;",
+        
+        # Icône et message de bienvenue
+        div(
+          style = "margin-bottom: 10px;",
+          icon("user-circle", class = "fa-lg"),
+          tags$strong(
+            style = "margin-left: 8px; font-size: 16px;",
+            paste0("Bienvenue, ", auth$user_info$user_name)
+          )
+        ),
+        
+        # Direction
+        div(
+          style = "margin-top: 8px;",
+          tags$strong("Direction : "),
+          tags$span(auth$user_info$direction)
+        ),
+        
+        # Service
+        div(
+          style = "margin-top: 5px;",
+          tags$strong("Service : "),
+          tags$span(service_display)
+        )
+      )
+    }
+  })
+  
+  # Menus de l'application (visibles UNIQUEMENT après connexion réussie)
+  output$authenticated_menus_ui <- renderUI({
+    if(auth$logged_in && !is.null(auth$user_info)) {
+      tagList(
+        # Menu Saisie (masqué pour le Directeur Général)
+        if(auth$user_info$role != "Direction_generale") {
+          menuItem("Saisie des activités", tabName = "saisie", 
+                   icon = icon("edit"), startExpanded = FALSE,
+                   menuSubItem("Nouvelle activité", tabName = "nouvelle_activite", icon = icon("plus-circle")),
+                   menuSubItem("Mes activités", tabName = "mes_activites", icon = icon("list"))
+          )
+        },
+        
+        # Menu Tableau de bord
+        menuItem("Tableau de bord", tabName = "dashboard", icon = icon("dashboard")),
+        
+        # Menu Analyses
+        menuItem("Analyses", tabName = "analyses", icon = icon("chart-line"),
+                 menuSubItem("Vue d'ensemble", tabName = "vue_ensemble", icon = icon("eye")),
+                 menuSubItem("Performance", tabName = "performance", icon = icon("trophy")),
+                 menuSubItem("Planification", tabName = "planification", icon = icon("calendar"))
+        ),
+        
+        # Menu Documents
+        menuItem("Documents", tabName = "documents", icon = icon("folder-open")),
+        
+        # Menu Rapports
+        menuItem("Rapports", tabName = "rapports", icon = icon("file-alt")),
+        
+        # Menu Administration (UNIQUEMENT pour le DG)
+        if(auth$user_info$role == "Direction_generale") {
+          menuItem("Administration", tabName = "admin", icon = icon("cog"))
+        }
+      )
     }
   })
   
@@ -1195,14 +1323,38 @@ server <- function(input, output, session) {
   output$progress_bar_ui <- renderUI({
     req(auth$logged_in)
     
-    etapes_ids <- sapply(etapes_config, function(e) paste0("val_", e$id))
-    etapes_vals <- sapply(etapes_ids, function(id) {
-      val <- input[[id]]
-      if(is.null(val)) return(FALSE)
-      return(val)
-    })
+    # Calculer l'avancement basé sur les statuts de documents
+    total_score <- 0
     
-    pct <- round(sum(etapes_vals) / length(etapes_config) * 100)
+    for(e in etapes_config) {
+      if(isTRUE(input[[paste0("val_", e$id)]])) {
+        if(e$doc) {
+          # Étape avec document : score selon le statut
+          doc_status <- input[[paste0("doc_status_", e$id)]]
+          
+          # Si le statut n'est pas encore défini, utiliser draft par défaut
+          if(is.null(doc_status)) {
+            doc_status <- "draft"
+          }
+          
+          score <- if(doc_status == "draft") {
+            3
+          } else if(doc_status == "non_valide") {
+            6
+          } else if(doc_status == "valide") {
+            10
+          } else {
+            3  # Par défaut
+          }
+          total_score <- total_score + score
+        } else {
+          # Pas de document requis (ANO) : score automatique de 10
+          total_score <- total_score + 10
+        }
+      }
+    }
+    
+    pct <- round(total_score)
     
     div(
       class = "progress",
@@ -1215,6 +1367,100 @@ server <- function(input, output, session) {
     )
   })
   
+  # Alerte en temps réel pour la référence INS
+  output$alert_ref_ins_ui <- renderUI({
+    ref_ins <- input$ref_activite
+    
+    if(!is.null(ref_ins) && ref_ins != "") {
+      # Vérifier si c'est "0.0.0.00"
+      if(ref_ins == "0.0.0.00") {
+        tags$small(
+          style = "color: #dd4b39; font-weight: bold;",
+          icon("times-circle"),
+          " La référence INS ne peut pas être '0.0.0.00'"
+        )
+      } else {
+        # Vérifier l'unicité
+        donnees_existantes <- db()
+        
+        if(!is.null(donnees_existantes) && nrow(donnees_existantes) > 0) {
+          # Si on est en mode édition, exclure l'activité en cours
+          if(!is.null(form_state$editing_activity)) {
+            donnees_a_verifier <- donnees_existantes[donnees_existantes$Reference != form_state$editing_activity$Reference, ]
+          } else {
+            donnees_a_verifier <- donnees_existantes
+          }
+          
+          if("Reference" %in% names(donnees_a_verifier)) {
+            refs_existantes <- donnees_a_verifier$Reference
+            
+            if(ref_ins %in% refs_existantes) {
+              # Référence déjà utilisée
+              tags$small(
+                style = "color: #dd4b39; font-weight: bold;",
+                icon("exclamation-triangle"),
+                " Cette référence est déjà utilisée !"
+              )
+            } else {
+              # Référence unique et valide
+              tags$small(
+                style = "color: #00a65a; font-weight: bold;",
+                icon("check-circle"),
+                " Référence disponible"
+              )
+            }
+          }
+        } else {
+          # Base vide, référence OK
+          tags$small(
+            style = "color: #00a65a; font-weight: bold;",
+            icon("check-circle"),
+            " Référence disponible"
+          )
+        }
+      }
+    }
+  })
+  
+  # Champ conditionnel pour préciser "Autre" source de financement
+  output$autre_financement_ui <- renderUI({
+    if("Autre" %in% input$source_financement) {
+      textInput("autre_financement_detail", "Précisez la source :",
+               placeholder = "Ex: PNUD, Union Européenne, etc.")
+    }
+  })
+  
+  # Calculer et afficher le gap de coût
+  output$gap_cout_ui <- renderUI({
+    req(input$cout_initial, input$cout_consomme)
+    
+    initial <- as.numeric(input$cout_initial)
+    consomme <- as.numeric(input$cout_consomme)
+    gap <- initial - consomme
+    pct <- if(initial > 0) round((consomme / initial) * 100) else 0
+    
+    couleur <- if(consomme > initial) {
+      "#dd4b39"  # Rouge si dépassement
+    } else if(pct > 80) {
+      "#f39c12"  # Orange si > 80%
+    } else {
+      "#00a65a"  # Vert sinon
+    }
+    
+    div(
+      style = "padding-top: 7px;",
+      tags$label("Gap (Reste) :"),
+      p(
+        style = paste0("font-size: 16px; font-weight: bold; color: ", couleur, ";"),
+        format(gap, big.mark = " ", scientific = FALSE), " FCFA"
+      ),
+      tags$small(
+        style = paste0("color: ", couleur, ";"),
+        paste0("Consommé : ", pct, "%")
+      )
+    )
+  })
+  
   # Durée de l'activité
   output$duree_activite_ui <- renderUI({
     req(input$date_debut, input$date_fin)
@@ -1223,33 +1469,120 @@ server <- function(input, output, session) {
     fin <- as.Date(input$date_fin)
     duree <- as.numeric(difftime(fin, debut, units = "days"))
     
-    div(
-      style = "padding-top: 7px;",
-      tags$label("Durée :"),
-      p(
-        style = "font-size: 16px; font-weight: bold; color: #3c8dbc;",
-        paste(duree, "jours")
+    if(duree < 0) {
+      # Durée négative : afficher un message d'erreur
+      div(
+        style = "padding-top: 7px;",
+        tags$label("Durée :"),
+        div(
+          class = "alert alert-danger",
+          style = "margin-top: 5px; padding: 10px;",
+          icon("exclamation-triangle"),
+          strong(" ERREUR : "),
+          "La date de fin ne peut pas être antérieure à la date de début !",
+          br(),
+          span(style = "font-size: 14px;", paste("Durée actuelle :", duree, "jours"))
+        )
       )
-    )
+    } else {
+      # Durée positive : affichage normal
+      couleur <- if(duree > 365) {
+        "#dd4b39"  # Rouge si > 1 an
+      } else if(duree > 180) {
+        "#f39c12"  # Orange si > 6 mois
+      } else {
+        "#00a65a"  # Vert sinon
+      }
+      
+      div(
+        style = "padding-top: 7px;",
+        tags$label("Durée :"),
+        p(
+          style = paste0("font-size: 16px; font-weight: bold; color: ", couleur, ";"),
+          paste(duree, "jours"),
+          if(duree > 365) {
+            span(
+              style = "font-size: 12px; color: #dd4b39; margin-left: 10px;",
+              icon("info-circle"),
+              " Attention : durée > 1 an"
+            )
+          }
+        )
+      )
+    }
   })
   
   # Formulaire des étapes
   output$etapes_form_ui <- renderUI({
     req(auth$logged_in)
     
+    # Réagir au trigger pour forcer le re-render
+    form_state$form_refresh_trigger
+    
     # Debug : confirmer que cette fonction s'exécute
-    cat("DEBUG: Génération du formulaire des étapes\n")
+    cat("DEBUG: Génération du formulaire des étapes (trigger:", form_state$form_refresh_trigger, ")\n")
     
     lapply(seq_along(etapes_config), function(i) {
       e <- etapes_config[[i]]
       
-      # Vérifier si un fichier existe déjà
+      # Vérifier si un fichier existe déjà (ancien ou nouveau)
       doc_key <- paste0("Doc_", e$id)
       existing_file <- form_state$docs_existants[[doc_key]]
-      has_file <- !is.null(existing_file) && existing_file != ""
+      has_old_file <- !is.null(existing_file) && existing_file != ""
+      has_new_file <- !is.null(input[[paste0("file_", e$id)]])
+      has_file <- has_old_file || has_new_file
+      
+      # Déterminer si l'étape est complétée
+      is_completed <- isTRUE(input[[paste0("val_", e$id)]])
+      
+      # Vérifier les conditions de déblocage
+      can_activate <- TRUE
+      blocked_reason <- ""
+      
+      # NOUVELLE LOGIQUE DE SÉQUENTIALITÉ
+      # Étape 1 (ETP), 2 (TDR), 3 (TP) : Indépendantes
+      # Étape 4 (ANO) : Dépend de l'étape 2 (TDR) avec statut "validé"
+      # Étapes 5-10 : Séquentialité stricte avec statut "validé"
+      
+      if(i == 4) {
+        # Étape 4 (ANO) : vérifier que l'étape 2 (TDR) est validée ET le document est "validé"
+        tdr_completed <- isTRUE(input$val_TDR)
+        tdr_doc_status <- input$doc_status_TDR
+        
+        if(!tdr_completed) {
+          can_activate <- FALSE
+          blocked_reason <- "L'étape 2 (Termes de référence) doit être validée d'abord"
+        } else if(is.null(tdr_doc_status) || tdr_doc_status != "valide") {
+          can_activate <- FALSE
+          blocked_reason <- "Le document de l'étape 2 (TDR) doit avoir le statut 'Validé'"
+        }
+      } else if(i >= 5) {
+        # À partir de l'étape 5, vérifier que l'étape précédente est validée ET le document est "validé"
+        prev_step <- etapes_config[[i-1]]
+        prev_completed <- isTRUE(input[[paste0("val_", prev_step$id)]])
+        
+        if(!prev_completed) {
+          can_activate <- FALSE
+          blocked_reason <- paste0("L'étape ", i-1, " (", prev_step$label, ") doit être validée d'abord")
+        } else if(prev_step$doc) {
+          # Si l'étape précédente a un document, vérifier son statut
+          prev_doc_status <- input[[paste0("doc_status_", prev_step$id)]]
+          if(is.null(prev_doc_status) || prev_doc_status != "valide") {
+            can_activate <- FALSE
+            blocked_reason <- paste0("Le document de l'étape ", i-1, " doit avoir le statut 'Validé'")
+          }
+        }
+      }
+      
+      # Pour toutes les étapes avec document : fichier obligatoire
+      if(e$doc && !has_file && !is_completed) {
+        can_activate <- FALSE
+        if(blocked_reason == "") {
+          blocked_reason <- "Veuillez joindre un fichier avant de valider cette étape"
+        }
+      }
       
       # Déterminer la classe CSS
-      is_completed <- isTRUE(input[[paste0("val_", e$id)]])
       css_class <- "step-row"
       if(is_completed) {
         css_class <- paste(css_class, "step-completed")
@@ -1261,52 +1594,73 @@ server <- function(input, output, session) {
         
         fluidRow(
           column(
-            width = 6,
+            width = 3,
             tags$strong(
               style = "font-size: 14px;",
               paste0(i, ". ", e$label)
-            )
-          ),
-          
-          column(
-            width = 2,
-            # Utiliser checkboxInput pour l'étape 1, switchInput pour les autres
-            if(i == 1) {
-              # Étape 1 : Checkbox simple et fiable avec indicateur
-              # IMPORTANT : Préserver la valeur actuelle
-              current_value <- isTRUE(input[[paste0("val_", e$id)]])
+            ),
+            # Afficher l'avertissement si l'étape est bloquée
+            if(!can_activate && !is_completed) {
               div(
-                style = "text-align: center; padding: 10px;",
-                checkboxInput(
-                  inputId = paste0("val_", e$id),
-                  label = NULL,
-                  value = current_value,  # Utiliser la valeur actuelle, pas toujours FALSE !
-                  width = "100%"
-                ),
-                uiOutput(paste0("status_", e$id))
-              )
-            } else {
-              # Étapes 2-10 : Switch normal
-              # Préserver aussi la valeur pour les switches
-              current_value <- isTRUE(input[[paste0("val_", e$id)]])
-              switchInput(
-                inputId = paste0("val_", e$id),
-                value = current_value,  # Utiliser la valeur actuelle
-                size = "small",
-                onStatus = "success",
-                offStatus = "danger"
+                style = "margin-top: 5px; color: #dd4b39; font-size: 12px;",
+                icon("lock"),
+                " ", blocked_reason
               )
             }
           ),
           
           column(
+            width = 1,
+            # Toutes les étapes utilisent maintenant switchInput
+            {
+              current_value <- isTRUE(input[[paste0("val_", e$id)]])
+              switchInput(
+                inputId = paste0("val_", e$id),
+                value = current_value,
+                size = "small",
+                onStatus = "success",
+                offStatus = "danger",
+                disabled = !can_activate && !is_completed
+              )
+            }
+          ),
+          
+          # Date de début (sauf pour ANO)
+          column(
             width = 2,
-            if(is_completed) {
-              dateInput(
-                inputId = paste0("date_", e$id),
-                label = NULL,
-                value = Sys.Date(),
-                format = "dd/mm/yyyy"
+            if(e$id != "ANO") {
+              tagList(
+                dateInput(
+                  inputId = paste0("date_debut_", e$id),
+                  label = NULL,
+                  value = if(is_completed) Sys.Date() else NULL,
+                  min = "2026-01-01",
+                  max = min(as.Date("2026-12-31"), Sys.Date()),  # Ne peut pas être postérieure à aujourd'hui
+                  format = "dd/mm/yyyy",
+                  language = "fr"
+                ),
+                # Alerte si date < date début activité OU date > aujourd'hui
+                uiOutput(paste0("alert_date_debut_", e$id))
+              )
+            }
+          ),
+          
+          # Date de fin (sauf pour ANO)
+          column(
+            width = 2,
+            if(e$id != "ANO") {
+              tagList(
+                dateInput(
+                  inputId = paste0("date_fin_", e$id),
+                  label = NULL,
+                  value = if(is_completed) Sys.Date() else NULL,
+                  min = "2026-01-01",
+                  max = "2026-12-31",
+                  format = "dd/mm/yyyy",
+                  language = "fr"
+                ),
+                # Alerte si date fin < date début OU si étape dépasse durée prévue
+                uiOutput(paste0("alert_date_fin_", e$id))
               )
             }
           ),
@@ -1330,93 +1684,227 @@ server <- function(input, output, session) {
                 }
               )
             }
+          ),
+          
+          column(
+            width = 2,
+            if(e$doc && (has_file || is_completed)) {
+              # Statut du document (seulement si fichier joint)
+              # Préserver la valeur actuelle pour éviter la réinitialisation
+              current_status <- input[[paste0("doc_status_", e$id)]]
+              if(is.null(current_status)) current_status <- "draft"
+              
+              selectInput(
+                inputId = paste0("doc_status_", e$id),
+                label = NULL,
+                choices = c("Draft" = "draft",
+                           "En cours" = "non_valide",
+                           "Finalisé(e)" = "valide"),
+                selected = current_status,
+                width = "100%"
+              )
+            }
           )
         )
       )
     })
   })
   
-  # Indicateur ON/OFF pour l'étape 1 (TDR)
-  output$status_TDR <- renderUI({
-    if(isTRUE(input$val_TDR)) {
-      tags$span(style = "color: #00a65a; font-weight: bold; font-size: 11px;", "✓ ON")
-    } else {
-      tags$span(style = "color: #dd4b39; font-weight: bold; font-size: 11px;", "✗ OFF")
+  # Outputs pour afficher les scores de chaque étape
+  lapply(etapes_config, function(e) {
+    output[[paste0("score_", e$id)]] <- renderUI({
+      if(isTRUE(input[[paste0("val_", e$id)]])) {
+        # Étape activée : calculer le score selon le statut du document
+        if(e$doc) {
+          doc_status <- input[[paste0("doc_status_", e$id)]]
+          score <- if(is.null(doc_status) || doc_status == "draft") {
+            3
+          } else if(doc_status == "non_valide") {
+            6
+          } else if(doc_status == "valide") {
+            10
+          } else {
+            3  # Par défaut
+          }
+          
+          couleur <- if(score == 10) "#00a65a" else if(score == 6) "#f39c12" else "#dd4b39"
+          
+          tags$div(
+            style = paste0("text-align: center; font-weight: bold; color: ", couleur, "; font-size: 14px;"),
+            paste0(score, "/10")
+          )
+        } else {
+          # Pas de document requis (ANO) : score automatique de 10
+          tags$div(
+            style = "text-align: center; font-weight: bold; color: #00a65a; font-size: 14px;",
+            "10/10"
+          )
+        }
+      }
+    })
+  })
+  
+  # Alertes pour les dates des étapes
+  lapply(etapes_config, function(e) {
+    if(e$id != "ANO") {
+      # Alerte pour date début
+      output[[paste0("alert_date_debut_", e$id)]] <- renderUI({
+        date_debut_etape <- input[[paste0("date_debut_", e$id)]]
+        date_debut_activite <- input$date_debut
+        aujourd_hui <- Sys.Date()
+        
+        if(!is.null(date_debut_etape)) {
+          date_debut_etape <- as.Date(date_debut_etape)
+          
+          # Vérifier si date > aujourd'hui
+          if(date_debut_etape > aujourd_hui) {
+            tags$small(
+              style = "color: #dd4b39; font-weight: bold;",
+              icon("times-circle"),
+              " Date future ! (après aujourd'hui)"
+            )
+          } else if(!is.null(date_debut_activite) && date_debut_etape < as.Date(date_debut_activite)) {
+            # Vérifier si date < date début activité
+            tags$small(
+              style = "color: #dd4b39; font-weight: bold;",
+              icon("exclamation-triangle"),
+              " Avant début activité"
+            )
+          }
+        }
+      })
+      
+      # Alerte pour date fin
+      output[[paste0("alert_date_fin_", e$id)]] <- renderUI({
+        date_debut_etape <- input[[paste0("date_debut_", e$id)]]
+        date_fin_etape <- input[[paste0("date_fin_", e$id)]]
+        date_fin_activite <- input$date_fin
+        
+        if(!is.null(date_debut_etape) && !is.null(date_fin_etape)) {
+          duree_etape <- as.numeric(difftime(as.Date(date_fin_etape), as.Date(date_debut_etape), units = "days"))
+          
+          if(duree_etape < 0) {
+            # Date fin < date début
+            tags$small(
+              style = "color: #dd4b39; font-weight: bold;",
+              icon("times-circle"),
+              " Date fin < date début !"
+            )
+          } else if(!is.null(date_fin_activite) && as.Date(date_fin_etape) > as.Date(date_fin_activite)) {
+            # Étape dépasse la date de fin de l'activité
+            tags$small(
+              style = "color: #f39c12; font-weight: bold;",
+              icon("exclamation-triangle"),
+              " Dépasse fin activité"
+            )
+          } else if(duree_etape > 60) {
+            # Étape prend plus de 2 mois
+            tags$small(
+              style = "color: #f39c12;",
+              icon("clock"),
+              paste0(" ", duree_etape, " jours (>2 mois)")
+            )
+          } else {
+            # Durée normale
+            tags$small(
+              style = "color: #00a65a;",
+              icon("check-circle"),
+              paste0(" ", duree_etape, " jours")
+            )
+          }
+        }
+      })
     }
   })
   
-  # Logique séquentielle des étapes - SIMPLIFIÉ
-  # Observer uniquement pour les étapes 2 à 10 (pas l'étape 1 !)
+  # Logique séquentielle des étapes - NOUVELLE VERSION
+  # Étapes 1, 2, 3 (ETP, TDR, TP) : INDÉPENDANTES - pas de observeEvent
+  # Étape 4 (ANO) : Dépend UNIQUEMENT de l'étape 2 (TDR) avec statut "validé"
+  # Étapes 5-10 : Séquentialité stricte avec statut "validé"
   
-  # Étape 2 : ANO
+  # Étape 4 (ANO) : Dépend de l'étape 2 (TDR) avec statut validé
   observeEvent(input$val_ANO, {
-    if(!is.null(input$val_ANO) && input$val_ANO && !isTRUE(input$val_TDR)) {
-      updateSwitchInput(session, "val_ANO", value = FALSE)
-      showNotification("Veuillez d'abord compléter l'étape 1 : Termes de référence global", type = "warning", duration = 3)
+    if(!is.null(input$val_ANO) && input$val_ANO) {
+      if(!isTRUE(input$val_TDR)) {
+        updateSwitchInput(session, "val_ANO", value = FALSE)
+        showNotification("Veuillez d'abord compléter l'étape 2 : Termes de référence global", type = "warning", duration = 3)
+      } else if(is.null(input$doc_status_TDR) || input$doc_status_TDR != "valide") {
+        updateSwitchInput(session, "val_ANO", value = FALSE)
+        showNotification("Le document de l'étape 2 (TDR) doit avoir le statut 'Validé'", type = "warning", duration = 3)
+      }
     }
   }, ignoreInit = TRUE)
   
-  # Étape 3 : ETP
-  observeEvent(input$val_ETP, {
-    if(!is.null(input$val_ETP) && input$val_ETP && !isTRUE(input$val_ANO)) {
-      updateSwitchInput(session, "val_ETP", value = FALSE)
-      showNotification("Veuillez d'abord compléter l'étape 2 : Demande d'Avis de Non Objection", type = "warning", duration = 3)
-    }
-  }, ignoreInit = TRUE)
-  
-  # Étape 4 : TP
-  observeEvent(input$val_TP, {
-    if(!is.null(input$val_TP) && input$val_TP && !isTRUE(input$val_ETP)) {
-      updateSwitchInput(session, "val_TP", value = FALSE)
-      showNotification("Veuillez d'abord compléter l'étape 3 : Mise en place de l'Équipe Technique", type = "warning", duration = 3)
-    }
-  }, ignoreInit = TRUE)
-  
-  # Étape 5 : FP
+  # Étape 5 (FP) : Dépend de l'étape 4 (ANO)
   observeEvent(input$val_FP, {
-    if(!is.null(input$val_FP) && input$val_FP && !isTRUE(input$val_TP)) {
+    if(!is.null(input$val_FP) && input$val_FP && !isTRUE(input$val_ANO)) {
       updateSwitchInput(session, "val_FP", value = FALSE)
-      showNotification("Veuillez d'abord compléter l'étape 4 : Travaux préparatoires", type = "warning", duration = 3)
+      showNotification("Veuillez d'abord compléter l'étape 4 : Demande d'Avis de Non Objection", type = "warning", duration = 3)
     }
   }, ignoreInit = TRUE)
   
-  # Étape 6 : CDT
+  # Étape 6 (CDT) : Dépend de l'étape 5 (FP) avec statut validé
   observeEvent(input$val_CDT, {
-    if(!is.null(input$val_CDT) && input$val_CDT && !isTRUE(input$val_FP)) {
-      updateSwitchInput(session, "val_CDT", value = FALSE)
-      showNotification("Veuillez d'abord compléter l'étape 5 : Formation du personnel", type = "warning", duration = 3)
+    if(!is.null(input$val_CDT) && input$val_CDT) {
+      if(!isTRUE(input$val_FP)) {
+        updateSwitchInput(session, "val_CDT", value = FALSE)
+        showNotification("Veuillez d'abord compléter l'étape 5 : Formation du personnel", type = "warning", duration = 3)
+      } else if(is.null(input$doc_status_FP) || input$doc_status_FP != "valide") {
+        updateSwitchInput(session, "val_CDT", value = FALSE)
+        showNotification("Le document de l'étape 5 (FP) doit avoir le statut 'Validé'", type = "warning", duration = 3)
+      }
     }
   }, ignoreInit = TRUE)
   
-  # Étape 7 : TAD
+  # Étape 7 (TAD) : Dépend de l'étape 6 (CDT) avec statut validé
   observeEvent(input$val_TAD, {
-    if(!is.null(input$val_TAD) && input$val_TAD && !isTRUE(input$val_CDT)) {
-      updateSwitchInput(session, "val_TAD", value = FALSE)
-      showNotification("Veuillez d'abord compléter l'étape 6 : Collecte de données sur le terrain", type = "warning", duration = 3)
+    if(!is.null(input$val_TAD) && input$val_TAD) {
+      if(!isTRUE(input$val_CDT)) {
+        updateSwitchInput(session, "val_TAD", value = FALSE)
+        showNotification("Veuillez d'abord compléter l'étape 6 : Collecte de données sur le terrain", type = "warning", duration = 3)
+      } else if(is.null(input$doc_status_CDT) || input$doc_status_CDT != "valide") {
+        updateSwitchInput(session, "val_TAD", value = FALSE)
+        showNotification("Le document de l'étape 6 (CDT) doit avoir le statut 'Validé'", type = "warning", duration = 3)
+      }
     }
   }, ignoreInit = TRUE)
   
-  # Étape 8 : ARR
+  # Étape 8 (ARR) : Dépend de l'étape 7 (TAD) avec statut validé
   observeEvent(input$val_ARR, {
-    if(!is.null(input$val_ARR) && input$val_ARR && !isTRUE(input$val_TAD)) {
-      updateSwitchInput(session, "val_ARR", value = FALSE)
-      showNotification("Veuillez d'abord compléter l'étape 7 : Traitement / Apurement des données", type = "warning", duration = 3)
+    if(!is.null(input$val_ARR) && input$val_ARR) {
+      if(!isTRUE(input$val_TAD)) {
+        updateSwitchInput(session, "val_ARR", value = FALSE)
+        showNotification("Veuillez d'abord compléter l'étape 7 : Traitement / Apurement des données", type = "warning", duration = 3)
+      } else if(is.null(input$doc_status_TAD) || input$doc_status_TAD != "valide") {
+        updateSwitchInput(session, "val_ARR", value = FALSE)
+        showNotification("Le document de l'étape 7 (TAD) doit avoir le statut 'Validé'", type = "warning", duration = 3)
+      }
     }
   }, ignoreInit = TRUE)
   
-  # Étape 9 : VR
+  # Étape 9 (VR) : Dépend de l'étape 8 (ARR) avec statut validé
   observeEvent(input$val_VR, {
-    if(!is.null(input$val_VR) && input$val_VR && !isTRUE(input$val_ARR)) {
-      updateSwitchInput(session, "val_VR", value = FALSE)
-      showNotification("Veuillez d'abord compléter l'étape 8 : Analyse et Rédaction du rapport", type = "warning", duration = 3)
+    if(!is.null(input$val_VR) && input$val_VR) {
+      if(!isTRUE(input$val_ARR)) {
+        updateSwitchInput(session, "val_VR", value = FALSE)
+        showNotification("Veuillez d'abord compléter l'étape 8 : Analyse et Rédaction du rapport", type = "warning", duration = 3)
+      } else if(is.null(input$doc_status_ARR) || input$doc_status_ARR != "valide") {
+        updateSwitchInput(session, "val_VR", value = FALSE)
+        showNotification("Le document de l'étape 8 (ARR) doit avoir le statut 'Validé'", type = "warning", duration = 3)
+      }
     }
   }, ignoreInit = TRUE)
   
-  # Étape 10 : PML
+  # Étape 10 (PML) : Dépend de l'étape 9 (VR) avec statut validé
   observeEvent(input$val_PML, {
-    if(!is.null(input$val_PML) && input$val_PML && !isTRUE(input$val_VR)) {
-      updateSwitchInput(session, "val_PML", value = FALSE)
-      showNotification("Veuillez d'abord compléter l'étape 9 : Validation du rapport", type = "warning", duration = 3)
+    if(!is.null(input$val_PML) && input$val_PML) {
+      if(!isTRUE(input$val_VR)) {
+        updateSwitchInput(session, "val_PML", value = FALSE)
+        showNotification("Veuillez d'abord compléter l'étape 9 : Validation du rapport", type = "warning", duration = 3)
+      } else if(is.null(input$doc_status_VR) || input$doc_status_VR != "valide") {
+        updateSwitchInput(session, "val_PML", value = FALSE)
+        showNotification("Le document de l'étape 9 (VR) doit avoir le statut 'Validé'", type = "warning", duration = 3)
+      }
     }
   }, ignoreInit = TRUE)
   
@@ -1424,63 +1912,52 @@ server <- function(input, output, session) {
   observe({
     req(auth$logged_in)
     
-    # Étape 2 grisée si étape 1 non complétée
+    # Étapes 1, 2, 3 (ETP, TDR, TP) : JAMAIS grisées (indépendantes)
+    # Pas de code ici pour ces étapes
+    
+    # Étape 4 (ANO) grisée si étape 2 (TDR) non complétée
     if(!isTRUE(input$val_TDR)) {
       shinyjs::addClass(id = "row_ANO", class = "disabled-step")
     } else {
       shinyjs::removeClass(id = "row_ANO", class = "disabled-step")
     }
     
-    # Étape 3 grisée si étape 2 non complétée
+    # Étape 5 (FP) grisée si étape 4 (ANO) non complétée
     if(!isTRUE(input$val_ANO)) {
-      shinyjs::addClass(id = "row_ETP", class = "disabled-step")
-    } else {
-      shinyjs::removeClass(id = "row_ETP", class = "disabled-step")
-    }
-    
-    # Étape 4 grisée si étape 3 non complétée
-    if(!isTRUE(input$val_ETP)) {
-      shinyjs::addClass(id = "row_TP", class = "disabled-step")
-    } else {
-      shinyjs::removeClass(id = "row_TP", class = "disabled-step")
-    }
-    
-    # Étape 5 grisée si étape 4 non complétée
-    if(!isTRUE(input$val_TP)) {
       shinyjs::addClass(id = "row_FP", class = "disabled-step")
     } else {
       shinyjs::removeClass(id = "row_FP", class = "disabled-step")
     }
     
-    # Étape 6 grisée si étape 5 non complétée
+    # Étape 6 (CDT) grisée si étape 5 (FP) non complétée
     if(!isTRUE(input$val_FP)) {
       shinyjs::addClass(id = "row_CDT", class = "disabled-step")
     } else {
       shinyjs::removeClass(id = "row_CDT", class = "disabled-step")
     }
     
-    # Étape 7 grisée si étape 6 non complétée
+    # Étape 7 (TAD) grisée si étape 6 (CDT) non complétée
     if(!isTRUE(input$val_CDT)) {
       shinyjs::addClass(id = "row_TAD", class = "disabled-step")
     } else {
       shinyjs::removeClass(id = "row_TAD", class = "disabled-step")
     }
     
-    # Étape 8 grisée si étape 7 non complétée
+    # Étape 8 (ARR) grisée si étape 7 (TAD) non complétée
     if(!isTRUE(input$val_TAD)) {
       shinyjs::addClass(id = "row_ARR", class = "disabled-step")
     } else {
       shinyjs::removeClass(id = "row_ARR", class = "disabled-step")
     }
     
-    # Étape 9 grisée si étape 8 non complétée
+    # Étape 9 (VR) grisée si étape 8 (ARR) non complétée
     if(!isTRUE(input$val_ARR)) {
       shinyjs::addClass(id = "row_VR", class = "disabled-step")
     } else {
       shinyjs::removeClass(id = "row_VR", class = "disabled-step")
     }
     
-    # Étape 10 grisée si étape 9 non complétée
+    # Étape 10 (PML) grisée si étape 9 (VR) non complétée
     if(!isTRUE(input$val_VR)) {
       shinyjs::addClass(id = "row_PML", class = "disabled-step")
     } else {
@@ -1500,31 +1977,36 @@ server <- function(input, output, session) {
     form_state$date_debut <- Sys.Date()
     form_state$date_fin <- Sys.Date() + 180
     form_state$observation <- ""
-    form_state$docs_existants <- list()
+    form_state$docs_existants <- list()  # IMPORTANT : vider la liste des docs
     form_state$editing_activity <- NULL
+    form_state$form_refresh_trigger <- form_state$form_refresh_trigger + 1  # Forcer le re-render
     
-    updateTextInput(session, "ref_activite", value = "")
+    updateTextInput(session, "ref_activite", value = "0.0.0.00")
     updateTextInput(session, "nom_activite", value = "")
     updatePickerInput(session, "type_activite", selected = "Sélectionnez le type")
     updateDateInput(session, "date_debut", value = Sys.Date())
     updateDateInput(session, "date_fin", value = Sys.Date() + 180)
     updateTextAreaInput(session, "observation_activite", value = "")
+    updateCheckboxGroupInput(session, "source_financement", selected = character(0))
+    updateTextInput(session, "autre_financement_detail", value = "")
+    updateTextInput(session, "ref_hiswaca", value = "0.0.0.00")
+    updateTextInput(session, "ref_etat", value = "0.0.0.00")
+    updateNumericInput(session, "cout_initial", value = 0)
+    updateNumericInput(session, "cout_consomme", value = 0)
     
     for(e in etapes_config) {
-      if(e$id == "TDR") {
-        # Étape 1 : checkbox
-        updateCheckboxInput(session, paste0("val_", e$id), value = FALSE)
-      } else {
-        # Étapes 2-10 : switch
-        updateSwitchInput(session, paste0("val_", e$id), value = FALSE)
-      }
+      # Toutes les étapes utilisent maintenant switch
+      updateSwitchInput(session, paste0("val_", e$id), value = FALSE)
     }
+    
+    # Forcer le re-render du formulaire des étapes pour actualiser les badges "Fichier joint"
+    cat("DEBUG: Formulaire réinitialisé - docs_existants vidé - trigger:", form_state$form_refresh_trigger, "\n")
   }
   
   # Enregistrer l'activité
   observeEvent(input$save_data_btn, {
     
-    # Validation
+    # Validation du nom
     if(is.null(input$nom_activite) || input$nom_activite == "") {
       showModal(modalDialog(
         title = tagList(icon("exclamation-triangle"), " Erreur"),
@@ -1535,6 +2017,7 @@ server <- function(input, output, session) {
       return()
     }
     
+    # Validation du type
     if(input$type_activite == "Sélectionnez le type") {
       showModal(modalDialog(
         title = tagList(icon("exclamation-triangle"), " Erreur"),
@@ -1545,13 +2028,288 @@ server <- function(input, output, session) {
       return()
     }
     
+    # Validation de la cohérence des dates
+    debut <- as.Date(input$date_debut)
+    fin <- as.Date(input$date_fin)
+    duree <- as.numeric(difftime(fin, debut, units = "days"))
+    
+    if(duree < 0) {
+      showModal(modalDialog(
+        title = tagList(icon("exclamation-triangle"), " Erreur de dates"),
+        div(
+          p(strong("La date de fin ne peut pas être antérieure à la date de début !")),
+          p(paste("Date de début :", format(debut, "%d/%m/%Y"))),
+          p(paste("Date de fin :", format(fin, "%d/%m/%Y"))),
+          p(style = "color: red;", paste("Durée :", duree, "jours"))
+        ),
+        easyClose = TRUE,
+        footer = modalButton("OK")
+      ))
+      return()
+    }
+    
+    # ============================================================================
+    # VALIDATION DE L'UNICITÉ DE LA RÉFÉRENCE INS
+    # ============================================================================
+    ref_ins <- input$ref_activite
+    
+    # 1. Vérifier que la référence INS n'est pas "0.0.0.00"
+    if(is.null(ref_ins) || ref_ins == "" || ref_ins == "0.0.0.00") {
+      showModal(modalDialog(
+        title = tagList(icon("exclamation-triangle"), " Référence INS invalide"),
+        div(
+          p(strong("La référence INS est obligatoire et ne peut pas être '0.0.0.00' !")),
+          p("La référence '0.0.0.00' est réservée uniquement pour les références État et HISWACA."),
+          p(style = "color: #f39c12;", icon("lightbulb"), 
+            " Exemple de référence valide : 1.2.1.03, 2.5.3.12, etc."),
+          p(style = "color: #3c8dbc;", "Format attendu : X.X.X.XX")
+        ),
+        easyClose = TRUE,
+        footer = modalButton("OK")
+      ))
+      return()
+    }
+    
+    # 2. Vérifier l'unicité de la référence INS dans toute la base
+    donnees_existantes <- db()
+    
+    if(!is.null(donnees_existantes) && nrow(donnees_existantes) > 0) {
+      # Si on est en mode édition, exclure l'activité en cours de modification
+      if(!is.null(form_state$editing_activity)) {
+        # Exclure la ligne en cours d'édition (même référence = modification, pas doublon)
+        donnees_a_verifier <- donnees_existantes[donnees_existantes$Reference != form_state$editing_activity$Reference, ]
+      } else {
+        donnees_a_verifier <- donnees_existantes
+      }
+      
+      # Vérifier si la référence existe déjà
+      if("Reference" %in% names(donnees_a_verifier)) {
+        refs_existantes <- donnees_a_verifier$Reference
+        
+        if(ref_ins %in% refs_existantes) {
+          # Trouver l'activité qui utilise déjà cette référence
+          activite_existante <- donnees_a_verifier[donnees_a_verifier$Reference == ref_ins, ][1, ]
+          
+          showModal(modalDialog(
+            title = tagList(icon("exclamation-triangle"), " Référence INS déjà utilisée"),
+            div(
+              p(strong(paste0("La référence '", ref_ins, "' est déjà utilisée !"))),
+              p("Cette référence est déjà attribuée à l'activité suivante :"),
+              tags$div(
+                style = "background: #f4f4f4; padding: 10px; border-left: 4px solid #dd4b39; margin: 10px 0;",
+                p(tags$strong("Activité : "), activite_existante$Activite),
+                p(tags$strong("Type : "), activite_existante$Type_Activite),
+                p(tags$strong("Responsable : "), activite_existante$Responsable),
+                p(tags$strong("Direction : "), activite_existante$Direction)
+              ),
+              p(style = "color: red;", icon("times-circle"), 
+                " Chaque activité doit avoir une référence INS unique."),
+              p(style = "color: #3c8dbc;", icon("lightbulb"), 
+                " Veuillez choisir une autre référence pour votre activité.")
+            ),
+            easyClose = TRUE,
+            footer = modalButton("OK")
+          ))
+          return()
+        }
+      }
+    }
+    
+    # Validation de la séquentialité des étapes et des fichiers
+    etapes_validees <- sapply(etapes_config, function(e) {
+      isTRUE(input[[paste0("val_", e$id)]])
+    })
+    
+    # Vérifier que chaque étape validée a un fichier (sauf ANO)
+    for(i in seq_along(etapes_config)) {
+      e <- etapes_config[[i]]
+      if(etapes_validees[i] && e$doc) {
+        # Vérifier si un fichier est joint ou existe déjà
+        has_new_file <- !is.null(input[[paste0("file_", e$id)]])
+        doc_key <- paste0("Doc_", e$id)
+        has_old_file <- !is.null(form_state$docs_existants[[doc_key]]) && 
+                        form_state$docs_existants[[doc_key]] != ""
+        
+        if(!has_new_file && !has_old_file) {
+          showModal(modalDialog(
+            title = tagList(icon("exclamation-triangle"), " Fichier manquant"),
+            div(
+              p(strong(paste0("L'étape ", i, " (", e$label, ") est validée mais aucun fichier n'est joint !"))),
+              p("Veuillez joindre un document justificatif avant de valider cette étape.")
+            ),
+            easyClose = TRUE,
+            footer = modalButton("OK")
+          ))
+          return()
+        }
+      }
+    }
+    
+    # Vérifier la séquentialité spécifique
+    # Étape 4 (ANO) : nécessite étape 2 (TDR)
+    if(etapes_validees[4]) {  # ANO est à l'index 4
+      if(!etapes_validees[2]) {  # TDR est à l'index 2
+        showModal(modalDialog(
+          title = tagList(icon("exclamation-triangle"), " Erreur de séquentialité"),
+          div(
+            p(strong("L'étape 4 (Demande d'Avis de Non Objection) ne peut pas être validée !")),
+            p("L'étape 2 (Termes de référence global) doit être validée d'abord."),
+            p(style = "color: #f39c12;", icon("info-circle"), 
+              " L'ANO nécessite l'approbation préalable des TDR.")
+          ),
+          easyClose = TRUE,
+          footer = modalButton("OK")
+        ))
+        return()
+      }
+    }
+    
+    # Valider les dates des étapes
+    date_debut_activite <- as.Date(input$date_debut)
+    date_fin_activite <- as.Date(input$date_fin)
+    
+    for(i in seq_along(etapes_config)) {
+      e <- etapes_config[[i]]
+      
+      if(e$id != "ANO" && etapes_validees[i]) {
+        date_debut_etape <- input[[paste0("date_debut_", e$id)]]
+        date_fin_etape <- input[[paste0("date_fin_", e$id)]]
+        
+        # Vérifier que les dates sont renseignées
+        if(is.null(date_debut_etape) || is.null(date_fin_etape)) {
+          showModal(modalDialog(
+            title = tagList(icon("exclamation-triangle"), " Dates manquantes"),
+            div(
+              p(strong(paste0("L'étape ", i, " (", e$label, ") nécessite des dates !"))),
+              p("Veuillez renseigner la date de début et la date de fin de cette étape.")
+            ),
+            easyClose = TRUE,
+            footer = modalButton("OK")
+          ))
+          return()
+        }
+        
+        date_debut_etape <- as.Date(date_debut_etape)
+        date_fin_etape <- as.Date(date_fin_etape)
+        aujourd_hui <- Sys.Date()
+        
+        # Vérifier que date début étape <= aujourd'hui
+        if(date_debut_etape > aujourd_hui) {
+          showModal(modalDialog(
+            title = tagList(icon("exclamation-triangle"), " Date future"),
+            div(
+              p(strong(paste0("L'étape ", i, " (", e$label, ") : date de début future !"))),
+              p(paste0("Date début étape : ", format(date_debut_etape, "%d/%m/%Y"))),
+              p(paste0("Date actuelle : ", format(aujourd_hui, "%d/%m/%Y"))),
+              p(style = "color: red;", "La date de début de l'étape ne peut pas être postérieure à aujourd'hui.")
+            ),
+            easyClose = TRUE,
+            footer = modalButton("OK")
+          ))
+          return()
+        }
+        
+        # Vérifier que date début étape >= date début activité
+        if(date_debut_etape < date_debut_activite) {
+          showModal(modalDialog(
+            title = tagList(icon("exclamation-triangle"), " Date incohérente"),
+            div(
+              p(strong(paste0("L'étape ", i, " (", e$label, ") : date de début incorrecte !"))),
+              p(paste0("Date début étape : ", format(date_debut_etape, "%d/%m/%Y"))),
+              p(paste0("Date début activité : ", format(date_debut_activite, "%d/%m/%Y"))),
+              p(style = "color: red;", "La date de début de l'étape ne peut pas être antérieure à la date de début de l'activité.")
+            ),
+            easyClose = TRUE,
+            footer = modalButton("OK")
+          ))
+          return()
+        }
+        
+        # Vérifier que date fin étape >= date début étape
+        if(date_fin_etape < date_debut_etape) {
+          showModal(modalDialog(
+            title = tagList(icon("exclamation-triangle"), " Durée négative"),
+            div(
+              p(strong(paste0("L'étape ", i, " (", e$label, ") : durée négative !"))),
+              p(paste0("Date début : ", format(date_debut_etape, "%d/%m/%Y"))),
+              p(paste0("Date fin : ", format(date_fin_etape, "%d/%m/%Y"))),
+              p(style = "color: red;", "La date de fin ne peut pas être antérieure à la date de début.")
+            ),
+            easyClose = TRUE,
+            footer = modalButton("OK")
+          ))
+          return()
+        }
+      }
+    }
+    
+    # Vérifier la séquentialité à partir de l'étape 5
+    for(i in 5:length(etapes_config)) {
+      if(etapes_validees[i]) {
+        # Vérifier que l'étape précédente est validée
+        if(!etapes_validees[i-1]) {
+          e_current <- etapes_config[[i]]
+          e_prev <- etapes_config[[i-1]]
+          showModal(modalDialog(
+            title = tagList(icon("exclamation-triangle"), " Erreur de séquentialité"),
+            div(
+              p(strong(paste0("L'étape ", i, " (", e_current$label, ") ne peut pas être validée !"))),
+              p(paste0("L'étape ", i-1, " (", e_prev$label, ") doit être validée d'abord.")),
+              p(style = "color: #f39c12;", icon("info-circle"), 
+                " Les étapes 5 à 10 doivent être validées dans l'ordre.")
+            ),
+            easyClose = TRUE,
+            footer = modalButton("OK")
+          ))
+          return()
+        }
+      }
+    }
+    
     # Entourer le code d'enregistrement dans un tryCatch
     tryCatch({
-      # Calculer l'avancement
-      etapes_vals <- sapply(etapes_config, function(e) {
-        isTRUE(input[[paste0("val_", e$id)]])
-      })
-      avancement <- round(sum(etapes_vals) / length(etapes_config) * 100)
+      # Calculer l'avancement basé sur les statuts de documents
+      total_score <- 0
+      
+      cat("DEBUG: Calcul de l'avancement\n")
+      
+      for(e in etapes_config) {
+        if(isTRUE(input[[paste0("val_", e$id)]])) {
+          if(e$doc) {
+            # Étape avec document : score selon le statut
+            doc_status <- input[[paste0("doc_status_", e$id)]]
+            
+            # Si le statut n'est pas encore défini, vérifier si un fichier est joint
+            if(is.null(doc_status)) {
+              doc_status <- "draft"  # Valeur par défaut
+            }
+            
+            score <- if(doc_status == "draft") {
+              3
+            } else if(doc_status == "non_valide") {
+              6
+            } else if(doc_status == "valide") {
+              10
+            } else {
+              3  # Par défaut
+            }
+            
+            cat("DEBUG: Étape", e$id, "- Statut:", doc_status, "- Score:", score, "\n")
+            total_score <- total_score + score
+          } else {
+            # Pas de document requis (ANO) : score automatique de 10
+            cat("DEBUG: Étape", e$id, "(sans doc) - Score: 10\n")
+            total_score <- total_score + 10
+          }
+        }
+      }
+      
+      cat("DEBUG: Score total:", total_score, "\n")
+      
+      # Avancement = total_score sur 100 (10 étapes × 10 points max)
+      avancement <- round(total_score)
+      
+      cat("DEBUG: Avancement final:", avancement, "%\n")
       
       # Déterminer le statut
       date_fin <- as.Date(input$date_fin)
@@ -1576,6 +2334,19 @@ server <- function(input, output, session) {
         Type_Activite = input$type_activite,
         Reference = input$ref_activite,
         Activite = input$nom_activite,
+        Source_Financement = if(is.null(input$source_financement) || length(input$source_financement) == 0) {
+          ""
+        } else {
+          paste(input$source_financement, collapse = ", ")
+        },
+        Autre_Financement = if(!is.null(input$autre_financement_detail)) input$autre_financement_detail else "",
+        Ref_HISWACA = if(!is.null(input$ref_hiswaca)) input$ref_hiswaca else "",
+        Ref_Etat = if(!is.null(input$ref_etat)) input$ref_etat else "",
+        Cout_Initial = if(!is.null(input$cout_initial)) input$cout_initial else 0,
+        Cout_Consomme = if(!is.null(input$cout_consomme)) input$cout_consomme else 0,
+        Gap_Cout = if(!is.null(input$cout_initial) && !is.null(input$cout_consomme)) {
+          input$cout_initial - input$cout_consomme
+        } else 0,
         Observation = input$observation_activite,
         Avancement = avancement,
         Statut = statut,
@@ -1584,7 +2355,7 @@ server <- function(input, output, session) {
         DATE_FIN = format(as.Date(input$date_fin), "%Y-%m-%d")
       )
       
-      # Ajouter les étapes et documents
+      # Ajouter les étapes, documents et statuts
       for(e in etapes_config) {
         val_id <- paste0("val_", e$id)
         new_data[[paste0("Val_", e$id)]] <- if(isTRUE(input[[val_id]])) "Oui" else "Non"
@@ -1594,6 +2365,30 @@ server <- function(input, output, session) {
           new_data[[paste0("Date_", e$id)]] <- format(as.Date(input[[date_id]]), "%Y-%m-%d")
         } else {
           new_data[[paste0("Date_", e$id)]] <- ""
+        }
+        
+        # Sauvegarder le statut du document
+        if(e$doc) {
+          doc_status_id <- paste0("doc_status_", e$id)
+          doc_status <- input[[doc_status_id]]
+          new_data[[paste0("DocStatus_", e$id)]] <- if(!is.null(doc_status)) doc_status else "draft"
+        }
+        
+        # Sauvegarder les dates de début et fin (sauf pour ANO)
+        if(e$id != "ANO") {
+          date_debut_id <- paste0("date_debut_", e$id)
+          if(!is.null(input[[date_debut_id]])) {
+            new_data[[paste0("DateDebut_", e$id)]] <- format(as.Date(input[[date_debut_id]]), "%Y-%m-%d")
+          } else {
+            new_data[[paste0("DateDebut_", e$id)]] <- ""
+          }
+          
+          date_fin_id <- paste0("date_fin_", e$id)
+          if(!is.null(input[[date_fin_id]])) {
+            new_data[[paste0("DateFin_", e$id)]] <- format(as.Date(input[[date_fin_id]]), "%Y-%m-%d")
+          } else {
+            new_data[[paste0("DateFin_", e$id)]] <- ""
+          }
         }
       }
       
@@ -1702,9 +2497,12 @@ server <- function(input, output, session) {
     
     mes_activites <- db() %>%
       filter(Responsable == auth$user_info$user_name) %>%
-      select(Reference, Activite, Type_Activite, DATE_DEBUT, DATE_FIN, 
+      select(Reference, Activite, Type_Activite, Source_Financement, DATE_DEBUT, DATE_FIN, 
              Avancement, Statut, Date_inscription) %>%
       mutate(
+        # Gérer les NA dans Source_Financement
+        Source_Financement = ifelse(is.na(Source_Financement) | Source_Financement == "", 
+                                    "Non spécifié", Source_Financement),
         Actions = paste0(
           '<button class="btn btn-sm btn-info" onclick="Shiny.setInputValue(\'edit_activity\', \'', 
           Activite, '\', {priority: \'event\'})"><i class="fa fa-edit"></i> Modifier</button>'
@@ -1723,7 +2521,7 @@ server <- function(input, output, session) {
           url = '//cdn.datatables.net/plug-ins/1.10.11/i18n/French.json'
         )
       ),
-      colnames = c("Réf", "Activité", "Type", "Début", "Fin", 
+      colnames = c("Réf", "Activité", "Type", "Source Financement", "Début", "Fin", 
                   "Avancement", "Statut", "Date inscription", "Actions")
     ) %>%
       formatStyle(
@@ -1778,6 +2576,36 @@ server <- function(input, output, session) {
         obs_value <- if(!is.na(act$Observation)) act$Observation else ""
         updateTextAreaInput(session, "observation_activite", value = obs_value)
         
+        # Source de financement (avec gestion des NA)
+        if("Source_Financement" %in% names(act) && !is.na(act$Source_Financement) && act$Source_Financement != "") {
+          # Séparer les sources multiples
+          sources <- strsplit(as.character(act$Source_Financement), ", ")[[1]]
+          updateCheckboxGroupInput(session, "source_financement", selected = sources)
+        } else {
+          updateCheckboxGroupInput(session, "source_financement", selected = character(0))
+        }
+        
+        # Charger les nouveaux champs
+        if("Autre_Financement" %in% names(act) && !is.na(act$Autre_Financement)) {
+          updateTextInput(session, "autre_financement_detail", value = act$Autre_Financement)
+        }
+        
+        if("Ref_HISWACA" %in% names(act) && !is.na(act$Ref_HISWACA)) {
+          updateTextInput(session, "ref_hiswaca", value = act$Ref_HISWACA)
+        }
+        
+        if("Ref_Etat" %in% names(act) && !is.na(act$Ref_Etat)) {
+          updateTextInput(session, "ref_etat", value = act$Ref_Etat)
+        }
+        
+        if("Cout_Initial" %in% names(act) && !is.na(act$Cout_Initial)) {
+          updateNumericInput(session, "cout_initial", value = as.numeric(act$Cout_Initial))
+        }
+        
+        if("Cout_Consomme" %in% names(act) && !is.na(act$Cout_Consomme)) {
+          updateNumericInput(session, "cout_consomme", value = as.numeric(act$Cout_Consomme))
+        }
+        
         # Charger les étapes
         temp_docs <- list()
         for(e in etapes_config) {
@@ -1787,28 +2615,50 @@ server <- function(input, output, session) {
             val_text <- as.character(act[[val_col]])
             val_bool <- !is.na(val_text) && val_text == "Oui"
             
-            # Utiliser le bon type d'update selon l'étape
-            if(e$id == "TDR") {
-              # Étape 1 : checkbox
-              updateCheckboxInput(
-                session, 
-                paste0("val_", e$id), 
-                value = val_bool
-              )
-            } else {
-              # Étapes 2-10 : switch
-              updateSwitchInput(
-                session, 
-                paste0("val_", e$id), 
-                value = val_bool
-              )
-            }
+            # Toutes les étapes utilisent maintenant switch
+            updateSwitchInput(
+              session, 
+              paste0("val_", e$id), 
+              value = val_bool
+            )
           }
           
+          # Charger le document existant
           if(e$doc) {
             doc_col <- paste0("Doc_", e$id)
             if(doc_col %in% names(act) && !is.na(act[[doc_col]]) && act[[doc_col]] != "") {
               temp_docs[[doc_col]] <- act[[doc_col]]
+            }
+            
+            # Charger le statut du document
+            doc_status_col <- paste0("DocStatus_", e$id)
+            if(doc_status_col %in% names(act) && !is.na(act[[doc_status_col]])) {
+              updateSelectInput(
+                session,
+                paste0("doc_status_", e$id),
+                selected = as.character(act[[doc_status_col]])
+              )
+            }
+          }
+          
+          # Charger les dates de début et fin (sauf pour ANO)
+          if(e$id != "ANO") {
+            date_debut_col <- paste0("DateDebut_", e$id)
+            if(date_debut_col %in% names(act) && !is.na(act[[date_debut_col]]) && act[[date_debut_col]] != "") {
+              updateDateInput(
+                session,
+                paste0("date_debut_", e$id),
+                value = as.Date(act[[date_debut_col]])
+              )
+            }
+            
+            date_fin_col <- paste0("DateFin_", e$id)
+            if(date_fin_col %in% names(act) && !is.na(act[[date_fin_col]]) && act[[date_fin_col]] != "") {
+              updateDateInput(
+                session,
+                paste0("date_fin_", e$id),
+                value = as.Date(act[[date_fin_col]])
+              )
             }
           }
         }
@@ -1891,14 +2741,21 @@ server <- function(input, output, session) {
     
     data <- db()
     
-    if(auth$user_info$role == "RESPONSABLE") {
+    # Filtrage selon le rôle hiérarchique
+    if(auth$user_info$role == "Chef_bureau") {
+      # Chef de bureau : voit uniquement ses propres activités
       data <- data %>%
         filter(Responsable == auth$user_info$user_name)
-    } else if(auth$user_info$role == "Direction_Centrale") {
+    } else if(auth$user_info$role == "Chef_service") {
+      # Chef de service : voit toutes les activités de son service
+      data <- data %>%
+        filter(Service == auth$user_info$service)
+    } else if(auth$user_info$role == "Direction_centrale") {
+      # Directeur central : voit toutes les activités de sa direction
       data <- data %>%
         filter(Direction == auth$user_info$direction)
     }
-    # Le DG voit tout
+    # Direction_generale (DG) : voit tout (pas de filtre)
     
     return(data)
   })
@@ -2095,14 +2952,10 @@ server <- function(input, output, session) {
         Label = paste0(substr(Activite, 1, 40), 
                       ifelse(nchar(Activite) > 40, "...", "")),
         Couleur = case_when(
-          Avancement >= 80 ~ "#016B24",  # Vert 
-          Avancement >= 50 ~ "#00a65a",  # Bleu
-          Avancement >= 30 ~ "#03F754",  # Orange
-          TRUE ~ "#63FD96"               # Rouge
-          # Avancement >= 80 ~ "#00a65a",  # Vert #016B24
-          # Avancement >= 50 ~ "#3c8dbc",  # Bleu
-          # Avancement >= 30 ~ "#f39c12",  # Orange
-          # TRUE ~ "#dd4b39"               # Rouge
+          Avancement >= 80 ~ "#00a65a",  # Vert
+          Avancement >= 50 ~ "#3c8dbc",  # Bleu
+          Avancement >= 30 ~ "#f39c12",  # Orange
+          TRUE ~ "#dd4b39"               # Rouge
         )
       ) %>%
       arrange(Avancement)  # Inverser pour affichage
@@ -2141,12 +2994,9 @@ server <- function(input, output, session) {
         Label = paste0(substr(Activite, 1, 40), 
                       ifelse(nchar(Activite) > 40, "...", "")),
         Couleur = case_when(
-          Avancement >= 30 ~ "#FF8B8B",  # Orange
-          Avancement >= 15 ~ "#FF1919",  # Orange foncé
-          TRUE ~ "#B80000"               # Rouge
-          # Avancement >= 30 ~ "#f39c12",  # Orange
-          # Avancement >= 15 ~ "#ff851b",  # Orange foncé
-          # TRUE ~ "#dd4b39"               # Rouge
+          Avancement >= 30 ~ "#f39c12",  # Orange
+          Avancement >= 15 ~ "#ff851b",  # Orange foncé
+          TRUE ~ "#dd4b39"               # Rouge
         )
       ) %>%
       arrange(desc(Avancement))  # Inverser pour affichage (du plus haut au plus bas)
@@ -2318,7 +3168,7 @@ server <- function(input, output, session) {
       orientation = 'h',
       text = ~paste0(round(Avancement_Moyen, 1), "% (", Nb_Activites, " act.)"),
       textposition = "outside",
-      marker = list(color = "#3c8dbc")
+      marker = list(color = "#00a65a")
     ) %>%
       layout(
         xaxis = list(title = "Avancement moyen (%)"),
@@ -2367,7 +3217,7 @@ server <- function(input, output, session) {
       type = "histogram",
       nbinsx = 20,
       marker = list(
-        color = "#3c8dbc",
+        color = "#f39c12",
         line = list(color = "#fff", width = 1)
       )
     ) %>%
@@ -2393,46 +3243,102 @@ server <- function(input, output, session) {
       ) %>%
       filter(!is.na(DATE_DEBUT), !is.na(DATE_FIN)) %>%
       arrange(DATE_DEBUT) %>%
-      head(30)
+      head(30)  # Limiter à 30 activités pour la lisibilité
     
     if(nrow(data_timeline) == 0) {
       return(plotly_empty())
     }
     
-    # Créer le graphique Gantt
+    # Ajouter une colonne pour le label Y (nom court de l'activité)
+    data_timeline <- data_timeline %>%
+      mutate(
+        Label = paste0(Reference, " - ", 
+                      ifelse(nchar(Activite) > 40, 
+                             paste0(substr(Activite, 1, 40), "..."), 
+                             Activite)),
+        # Couleur selon l'avancement
+        Couleur = case_when(
+          Avancement >= 80 ~ "#00a65a",  # Vert
+          Avancement >= 50 ~ "#3c8dbc",  # Bleu
+          Avancement >= 30 ~ "#f39c12",  # Orange
+          TRUE ~ "#dd4b39"               # Rouge
+        ),
+        # Texte hover
+        HoverText = paste0(
+          "<b>", Reference, " - ", Activite, "</b><br>",
+          "Type: ", Type_Activite, "<br>",
+          "Début: ", format(DATE_DEBUT, "%d/%m/%Y"), "<br>",
+          "Fin: ", format(DATE_FIN, "%d/%m/%Y"), "<br>",
+          "Durée: ", as.numeric(DATE_FIN - DATE_DEBUT), " jours<br>",
+          "Avancement: ", Avancement, "%<br>",
+          "Statut: ", Statut, "<br>",
+          "Responsable: ", Responsable
+        )
+      )
+    
+    # Créer le diagramme de Gantt
     fig <- plot_ly()
     
+    # Ajouter une barre pour chaque activité
     for(i in 1:nrow(data_timeline)) {
       act <- data_timeline[i, ]
       
       fig <- fig %>%
         add_trace(
-          x = c(act$DATE_DEBUT, act$DATE_FIN),
-          y = c(i, i),
-          type = "scatter",
-          mode = "lines",
-          line = list(width = 20, color = "#3c8dbc"),
-          text = paste0(
-            act$Reference, " - ", act$Activite, "<br>",
-            "Début: ", format(act$DATE_DEBUT, "%d/%m/%Y"), "<br>",
-            "Fin: ", format(act$DATE_FIN, "%d/%m/%Y"), "<br>",
-            "Avancement: ", act$Avancement, "%"
+          type = "bar",
+          orientation = "h",
+          x = as.numeric(act$DATE_FIN - act$DATE_DEBUT),
+          y = act$Label,
+          base = as.numeric(act$DATE_DEBUT - as.Date("2026-01-01")),
+          marker = list(
+            color = act$Couleur,
+            line = list(color = "rgba(0,0,0,0.2)", width = 1)
           ),
+          text = act$HoverText,
           hoverinfo = "text",
           showlegend = FALSE
         )
     }
     
+    # Configuration de l'axe X pour afficher les mois de 2026
+    mois_2026 <- seq(as.Date("2026-01-01"), as.Date("2026-12-31"), by = "month")
+    mois_labels <- c("Janvier", "Février", "Mars", "Avril", "Mai", "Juin", 
+                     "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre")
+    mois_values <- as.numeric(mois_2026 - as.Date("2026-01-01"))
+    
     fig %>%
       layout(
-        xaxis = list(title = "Période"),
+        title = list(
+          text = "",
+          font = list(size = 14)
+        ),
+        xaxis = list(
+          title = "Période (Année 2026)",
+          ticktext = mois_labels,
+          tickvals = mois_values,
+          tickangle = -45,
+          showgrid = TRUE,
+          gridcolor = "rgba(128,128,128,0.3)",
+          gridwidth = 1,
+          zeroline = TRUE,
+          zerolinecolor = "rgba(0,0,0,0.5)",
+          zerolinewidth = 2,
+          range = c(0, 365)  # Toute l'année 2026
+        ),
         yaxis = list(
           title = "",
-          ticktext = data_timeline$Reference,
-          tickvals = 1:nrow(data_timeline),
-          tickmode = "array"
+          tickfont = list(size = 10),
+          categoryorder = "trace",
+          showgrid = TRUE,
+          gridcolor = "rgba(128,128,128,0.2)",
+          gridwidth = 1
         ),
-        margin = list(l = 100)
+        margin = list(l = 300, r = 50, b = 120, t = 50),
+        hovermode = "closest",
+        plot_bgcolor = "rgba(240,240,240,0.3)",
+        paper_bgcolor = "white",
+        bargap = 0.15,
+        height = max(400, nrow(data_timeline) * 30)  # Hauteur dynamique
       )
   })
   
@@ -2520,11 +3426,29 @@ server <- function(input, output, session) {
     # Filtrer selon le rôle
     data <- get_filtered_data()
     
+    # Appliquer les filtres de recherche
+    search_term <- input$search_documents
+    filter_dir <- input$filter_doc_direction
+    
+    if(!is.null(search_term) && search_term != "") {
+      data <- data %>%
+        filter(
+          grepl(search_term, Reference, ignore.case = TRUE) |
+          grepl(search_term, Activite, ignore.case = TRUE) |
+          grepl(search_term, Responsable, ignore.case = TRUE)
+        )
+    }
+    
+    if(!is.null(filter_dir) && filter_dir != "") {
+      data <- data %>%
+        filter(Direction == filter_dir)
+    }
+    
     # Extraire tous les documents
     doc_cols <- grep("^Doc_", names(data), value = TRUE)
     
     all_files <- data %>%
-      select(Activite, Reference, all_of(doc_cols)) %>%
+      select(Activite, Reference, Responsable, Direction, all_of(doc_cols)) %>%
       pivot_longer(
         cols = all_of(doc_cols),
         names_to = "Etape",
@@ -2537,13 +3461,18 @@ server <- function(input, output, session) {
         div(
           class = "alert alert-info",
           icon("info-circle"),
-          " Aucun document disponible."
+          " Aucun document disponible avec ces critères de recherche."
         )
       )
     }
     
     # Créer la liste des téléchargements
     tagList(
+      tags$p(
+        class = "text-muted",
+        icon("file"),
+        paste0(" ", nrow(all_files), " document(s) trouvé(s)")
+      ),
       lapply(1:nrow(all_files), function(i) {
         file_info <- all_files[i, ]
         file_path <- file_info$Fichier
@@ -2568,7 +3497,9 @@ server <- function(input, output, session) {
                   strong(file_info$Reference), " - ", file_info$Activite, br(),
                   tags$small(
                     class = "text-muted",
-                    "Étape : ", etape_label
+                    "Étape : ", etape_label, " | ",
+                    "Responsable : ", file_info$Responsable, " | ",
+                    "Direction : ", file_info$Direction
                   )
                 )
               ),
@@ -2754,9 +3685,10 @@ server <- function(input, output, session) {
       ),
       hoverinfo = "text",
       marker = list(
-        size = 12,
+        size = ~Avancement / 5,  # Taille proportionnelle : 0% = 0px, 100% = 20px
+        sizemode = 'diameter',
         line = list(color = 'white', width = 1),
-        opacity = 0.8
+        opacity = 0.7
       )
     ) %>%
       layout(
@@ -2884,8 +3816,8 @@ server <- function(input, output, session) {
         
         fluidRow(
           column(6, selectInput("new_user_role", "Rôle :",
-                               choices = c("Directeur général", "Direction_Centrale", "RESPONSABLE"),
-                               selected = "RESPONSABLE")),
+                               choices = c("Direction_generale", "Direction_centrale", "Chef_service", "Chef_bureau"),
+                               selected = "Chef_bureau")),
           column(6, selectInput("new_user_direction", "Direction :",
                                choices = c("Sélectionnez..." = "", directions_list)))
         ),
@@ -2995,7 +3927,7 @@ server <- function(input, output, session) {
         
         fluidRow(
           column(6, selectInput("edit_user_role", "Rôle :",
-                               choices = c("Directeur général", "Direction_Centrale", "RESPONSABLE"),
+                               choices = c("Direction_generale", "Direction_centrale", "Chef_service", "Chef_bureau"),
                                selected = user$role)),
           column(6, selectInput("edit_user_direction", "Direction :",
                                choices = c("Sélectionnez..." = "", directions_list),
